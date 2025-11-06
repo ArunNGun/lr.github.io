@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #999;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .status-indicator.connected {
+            background: #28a745;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        .dice-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .dice-btn {
+            background: #28a745;
+            color: white;
+            font-size: 24px;
+            padding: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            .dice-btn {
+                font-size: 20px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <input
+            type="text"
+            id="phoneIp"
+            placeholder="192.168.1.5"
+            value="192.168.1.5"
+        >
+        <div class="status-indicator" id="statusIndicator"></div>
+
+        <div class="dice-grid">
+            <button class="dice-btn" onclick="setDice(1)">1</button>
+            <button class="dice-btn" onclick="setDice(2)">2</button>
+            <button class="dice-btn" onclick="setDice(3)">3</button>
+            <button class="dice-btn" onclick="setDice(4)">4</button>
+            <button class="dice-btn" onclick="setDice(5)">5</button>
+            <button class="dice-btn" onclick="setDice(6)">6</button>
+        </div>
+    </div>
+
+    <script>
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        window.addEventListener('load', () => {
+            const savedIp = localStorage.getItem('ludoPhoneIp');
+            if (savedIp) {
+                document.getElementById('phoneIp').value = savedIp;
+            }
+            testConnection();
+        });
+
+        document.getElementById('phoneIp').addEventListener('change', (e) => {
+            localStorage.setItem('ludoPhoneIp', e.target.value);
+            testConnection();
+        });
+
+        function getBaseUrl() {
+            const ip = document.getElementById('phoneIp').value.trim();
+            return `http://${ip}:8080`;
+        }
+
+        function testConnection() {
+            statusIndicator.className = 'status-indicator';
+            fetch(`${getBaseUrl()}/api`)
+                .then(r => r.json())
+                .then(d => {
+                    statusIndicator.classList.add('connected');
+                })
+                .catch(e => {
+                    statusIndicator.classList.add('error');
+                });
+        }
+
+        function setDice(n) {
+            fetch(`${getBaseUrl()}/dice/set?value=${n}`)
+                .then(r => r.json())
+                .catch(e => console.log(e));
+        }
+
+        document.addEventListener('keypress', (e) => {
+            const key = e.key;
+            if (key >= '1' && key <= '6') {
+                setDice(parseInt(key));
+            }
+        });
+    </script>
+</body>
+</html>
